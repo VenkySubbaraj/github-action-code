@@ -1,0 +1,38 @@
+name: Check Redshift Cluster Status
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  check-redshift-status:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v1
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: us-east-1
+
+      - name: Check Redshift cluster status
+        run: |
+          aws redshift describe-clusters --cluster-identifier my-cluster --query "Clusters[*].ClusterStatus" --output text > status.txt
+
+      - name: Read Redshift cluster status
+        run: |
+          status=$(cat status.txt)
+          echo "Cluster status: $status"
+
+      - name: Take action based on Redshift cluster status
+        if: ${{ env.status == 'paused' }}
+        run: |
+          # do something if the cluster is paused
+
+        if: ${{ env.status == 'available' }}
+        run: |
+          # do something if the cluster is available
